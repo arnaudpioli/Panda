@@ -314,6 +314,7 @@ def squatAnalyse():
     global maxxx
     global minnn
     global MAXIMUS
+    global error
     exercise="Squat"   
     
     #mph = min peak height // mpd = min peak distance (période)
@@ -343,11 +344,17 @@ def squatAnalyse():
 #////////////////////////////Separation des Mouvements    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\#
 #################################################################################################
     maximus=np.zeros([len(maxxx),11])              
-    maximus=getMaximus(maximus)           
+    try :
+        maximus=getMaximus(maximus)           
+    except :
+        print('Pb with getMaximus')
+        error = True
     #getMaximus() est là pour ordonner les max, min dans un tableau propre.              
     maximus=maximus[maximus[:, 0]-maximus[:, 3] > 15]
     maximus=maximus[maximus[:, 0]-maximus[:, 3] > 15]
-    maximus=maximus[maximus[:, 0]-maximus[:, 3] < 150]
+    maximus=maximus[maximus[:, 0]-maximus[:, 3] < 180]
+    maximus=maximus[maximus[:, 4] > maximus[:, 1]]
+    
 #################################################################################################
 #//////////////////////////////    Notes des Mouvements   \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\#
 #################################################################################################
@@ -360,12 +367,17 @@ def squatAnalyse():
 #Par Arnaud########################
 #A partir des max et mins, on trouve les débuts de montée et début de descente
 def SquatAnalyse2():
+
     global maximus
-    #global tab
+
     SEUIL = 5
-    tab=np.zeros([len(maxxx)-1,7])              
+    
     if len(maximus) > 0:
+
+        tab = np.zeros([len(maximus),7])              
+
         for i in range(0, len(maximus)):
+   
             p1 = maximus[i][2]  #Indice du premier min
             p4 = maximus[i][1]  #Indice du max
             p7 = maximus[i][4]  #Indice du deuxième min
@@ -385,7 +397,9 @@ def SquatAnalyse2():
                     if filtreflexMAX[j] > filtreflexMAX[p4] - SEUIL :
                         p3 = j
                         j = p4  #Indice de fin de montée
-                        
+            
+            print(p4)
+            print(p7)
             if p7 > p4:
                 
                 j = p4
@@ -393,7 +407,10 @@ def SquatAnalyse2():
                     j = j + 1                    
                     if filtreflexMAX[j] < filtreflexMAX[p4] - SEUIL :
                         p5 = j
+                        print('LA')
                         j = p7  #Indice de début de descente
+                    else : 
+                        p5 = p4
             
                 j = p5
                 while j < p7:
@@ -401,9 +418,17 @@ def SquatAnalyse2():
                     if filtreflexMAX[j] < filtreflexMAX[p7] + SEUIL :
                         p6 = j
                         j = p7 #Indice de fin de descente
+                    else : 
+                        p6 = p7
                 
-            print(tab)
+#            print(tab)
             tab[i] = [p1, p2, p3, p4, p5, p6, p7]
+    
+    if 'tab'in locals():
+        return tab
+    
+    else:
+        tab = np.zeros([len(maximus),7])              
     
     return tab
 
@@ -440,29 +465,45 @@ def Proprio_Analyse():
 
     return maximus    
     
+
+def proprio():
+
+    proprio = False
+    
+    if exer == "proprioception_static" or exer == "proprioception_pillow" or exer == "proprioception_forthback" or exer == "proprioception_leftright" or exer == "proprioception_compass":
+        proprio = True
+    
+    else : 
+        proprio = False
+        
+    return proprio
+    
+    
 def getMaximus(maximus):
-    global exercise
+    global exer
     global maxxx
     global minnn    
 
-    for i in range (len(maximus)):        
-        maximus[i][0]=filtreflex[maxxx[i]]
-        maximus[i][1]=maxxx[i]
-        maximus[i][2]=searchmin_Avant(maxxx[i],exercise,minnn,filtreflex)
-        maximus[i][3]=filtreflex[int(maximus[i][2])]
-        maximus[i][4]=searchmin_Apres(maxxx[i],minnn,filtreflex) 
-        maximus[i][5]=filtreflex[int(maximus[i][4])]
-        maximus[i][6]=maximus[i][4]-maximus[i][2]
- 
-    maximus=maximus[maximus[:, 6] != 0]
-    maximus=maximus[maximus[:, 6] > 0]
+    if proprio() == False :
     
-    #maximus=maximus[maximus[:, 6] < 200]
-    maximus=maximus[maximus[:, 2] != 0]
-    maximus=np.delete(maximus,trim_table(maximus),0)
-    # maximus=maximus[maximus[:, 7] <200]  
+        for i in range (len(maximus)):        
+            maximus[i][0]=filtreflex[maxxx[i]]
+            maximus[i][1]=maxxx[i]
+            maximus[i][2]=searchmin_Avant(maxxx[i],exer,minnn,filtreflex)
+            maximus[i][3]=filtreflex[int(maximus[i][2])]
+            maximus[i][4]=searchmin_Apres(maxxx[i],minnn,filtreflex) 
+            maximus[i][5]=filtreflex[int(maximus[i][4])]
+            maximus[i][6]=maximus[i][4]-maximus[i][2]
+     
+        maximus=maximus[maximus[:, 6] != 0]
+        maximus=maximus[maximus[:, 6] > 0]
+        
+        #maximus=maximus[maximus[:, 6] < 200]
+        maximus=maximus[maximus[:, 2] != 0]
+        maximus=np.delete(maximus,trim_table(maximus),0)
+        # maximus=maximus[maximus[:, 7] <200]  
+        
     
-
 
     return maximus
     
@@ -615,77 +656,140 @@ def getNotes():
 
     
 
-def proprio():
-
-    proprio = False
-    
-    if exer == "proprioception_static" or exer == "proprioception_pillow" or exer == "proprioception_forthback" or exer == "proprioception_leftright" or exer == "proprioception_compass":
-        proprio = True
-    
-    else : 
-        proprio = False
-        
-    return proprio
 
 #Indicators a 4 colonnes : fluid, coor, puiss, stab // Autant de lignes que de mouvements
-def getIndiceSquat():
+def getIndice():
 
-    RANGE_PROPRIO = 250  #taille de ce qu'on enlève arbitrairement    
+    RANGE_PROPRIO = len(filtreflex)/6  #taille de ce qu'on enlève arbitrairement    
     
-    indicators=np.zeros([len(tab),4])
+    indicators = np.zeros([len(tab), 4])
 
-    Prop = proprio()
+
+    if proprio() == True :
+        
+            indicators = np.zeros([1, 4])
+
+            #La fluidité n'est pas à prendre en compte (default = -1)
+            indicators[0][0] = -1
+            
+            #La coordination n'est pas à prendre en compte (default = -1)
+            indicators[0][1] = -1
+
+            #La puissance n'est pas à prendre en compte (default = -1)
+            indicators[0][2] = -1
+            
+            #La stabilité se calcule sur la proprioception uniquement
+            #Quand l'algo Alfred sera prêt on le fera à partir de la valeur de tremblements     
+            indicators[0][3] = getStabMvt(RANGE_PROPRIO, len(filtreflex) - RANGE_PROPRIO, filtreflex)/ (float( len(filtreflex)) * 2 / 3)
+
 
     for i in range(len(tab)):
         
-        if Prop == False :        
+        if proprio() == False and len(maximus) > 0 :        
             
             #La fluidité est prise entre le début et la fin de montée
-            indicators[i][0] = getFluidity(int(tab[i][1]), int(tab[i][2]), filtreflex)     
+            indicators[i][0] = 1000 * ( getFluidity(int(tab[i][1]), int(tab[i][2]), filtreflex) / (tab[i][2] -tab[i][1])) + ( getFluidity(int(tab[i][4]), int(tab[i][5]), filtreflex)) / (tab[i][5] - tab[i][4])
             
             #La coordination est prise tout le long du mouvement
-            indicators[i][1] = getCoordination(int(tab[i][0]), int(tab[i][6]), filtreflex, filtrerot)
+            indicators[i][1] = 1000 * getCoordination(int(tab[i][0]), int(tab[i][6]), filtreflex, filtrerot) / ( tab[i][6] - tab[i][0])
     
             #La puissance est calculée pendant la montée et la descente
-            indicators[i][2] = getPuissance(int(tab[i][1]), int(tab[i][2]), int(tab[i][4]), int(tab[i][5]))
+            indicators[i][2] = getPuissance(int(tab[i][1]), int(tab[i][2]), int(tab[i][4]), int(tab[i][5]), filtreflex)
             
-            #La stabilité n'est pas à prendre en compte (default = 1000)
-            indicators[i][3] = 1000
-
-        if Prop :
-
-            #La fluidité n'est pas à prendre en compte (default = 1000)
-            indicators[i][0] = 1000
+            #La stabilité n'est pas à prendre en compte (default = -1)
+            indicators[i][3] = -1
             
-            #La coordination n'est pas à prendre en compte (default = 1000)
-            indicators[i][1] = 1000
-
-            #La puissance n'est pas à prendre en compte (default = 1000)
-            indicators[i][2] = 1000
+    if (proprio() == False and len(maximus) == 0) or error == True :
+        indicators = np.zeros([1, 4])
+        indicators[0][0] = -1
+        indicators[0][1] = -1
+        indicators[0][2] = -1
+        indicators[0][3] = -1
             
-            #La stabilité se calcule sur la proprioception uniquement
-            if len(filtreflex > 502):
-                #Quand l'algo Alfred sera prêt on le fera à partir de la valeur de tremblements     
-                indicators[i][3] = getStabMvt(RANGE_PROPRIO, len(filtreflex) - 250, filtreflex)
+            
 
-    return indicators
-
-    
-    
-    
-def getIndiceProp():
-
-    indicators=np.zeros([len(maximus),4])
-
-    for i in range(len(maximus)):
         
-        indicators[i][0]=getFluidMvtprop(int(maximus[i][1]),int(maximus[i][2]),int(maximus[i][3]),int(maximus[i][4]),filtreflex)     
-        indicators[i][1]=getCoordination(int(maximus[i][1]),int(maximus[i][4]),filtreflex,filtrerot)
-        indicators[i][2]=getPuissance(int(maximus[i][1]),int(maximus[i][2]),filtreflex)
-        indicators[i][3]=getStabMvt(int(maximus[i][2]),int(maximus[i][3]),filtreflex)
-
     return indicators
+
+#Pour le moment la notation se fait en moyenne sans pondération (dans l'exo)
+#Amélioration: pondérer les poids des différentes notes par mvnt par le nm de points 
+#que l'on a regardé pendant le mvnt.
+
+
+def getIndiceEX():
     
+    #tableau qui recap les notes pour l'exercice (Fluidité, Coor, Puiss, Stab, 
+    #0 pour Squats et 1 pr proprio)
+    indicatorsex = np.zeros([1, 6])
+
+    indicators = getIndice()
+    
+    if proprio() :
+        
+        indicatorsex[0, 4] = 1        
+    else :
+        indicatorsex[0, 4] = 0
+    
+    if len(indicators) > 0 :  
+        
+        for i in range(0, indicators.shape[1]) :
+            
+            indicatorsex[0, i] = mean(indicators[:, i])
+    
+    indicatorsex[0, 5] = len(flex)
+
+    return indicatorsex
+
+
+def getIndicesSeance() :
+
+    global tousindices
+    zz = np.zeros(tousindices.shape)
+    ppp = np.zeros(tousindices.shape)
+    zz = tousindices
+    ppp = tousindices
+    means = np.zeros([1, 4])
+    
+    for popo in range(0, 3) :
+        
+        
+        print(popo)
+
+        for i in range(len(tousindices)-1) :
+
+            if zz[i, popo] == -1 :
+
+                zz[i, 5] = 0
+                print(zz[i, popo])
+                
+        means[0, popo] = sum( zz[:, popo] * zz[:, 5] ) / float(sum( zz[:, 5] ))
+        zz = tousindices
+#    
+#    for i in range(len(tousindices)-1) :
+#
+#            if tousindices[i, 3] == -1 :
+#
+#                ppp[i, 5] = 0
+#                
+#    means[0, 3] = sum( ppp[:, 3] * ppp[:, 5] ) / float(sum( ppp[:, 5] ))
+      
+               
+    return means
+    
+    
+#    
+#def getIndiceProp():
+#
+#    indicators=np.zeros([len(maximus),4])
+#
+#    for i in range(len(maximus)):
+#        
+#        indicators[i][0]=getFluidMvtprop(int(maximus[i][1]),int(maximus[i][2]),int(maximus[i][3]),int(maximus[i][4]),filtreflex)     
+#        indicators[i][1]=getCoordination(int(maximus[i][1]),int(maximus[i][4]),filtreflex,filtrerot)
+#        indicators[i][2]=getPuissance(int(maximus[i][1]),int(maximus[i][2]),filtreflex)
+#        indicators[i][3]=getStabMvt(int(maximus[i][2]),int(maximus[i][3]),filtreflex)
+#
+#    return indicators
 ###################################
 
 
@@ -1023,7 +1127,7 @@ def read_in():
     
     
 #################################################################################################
-#////////////////////////////////////////////Executionn\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\#
+#////////////////////////////////////////////Execution\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\#
 #################################################################################################
 
 ###la partie qui suit jusqu'a la boucle de lecture doit etre adapté selon la façon de  lecture de données sur la base de donnée 
@@ -1037,7 +1141,7 @@ def read_in():
 
 
 #connexion a la base de données 
-idd=ObjectId("59a05ce962408b105106f60f")
+idd=ObjectId("59a4118dbd36e581db0be41d")
 MONGO_HOST = "127.0.0.1"
 MONGO_DB = "Panda2"
 client = pymongo.MongoClient("127.0.0.1",27017)
@@ -1067,7 +1171,7 @@ exerids=[]
 #    exerids.append(ObjectId("%s"%str(i)))
     
 result2 = collection2.find({"_id":idd})
-result2=collection2.find({"_id":{'$in': exerids }})
+result2 = collection2.find({"_id":{'$in': exerids }})
 
 
 x2 = []
@@ -1089,7 +1193,10 @@ mode='indicators'
 #boucle pour la lecture et le traitement de chaque  exercice dans la sceance 
 #mmm c'est le compteur 
 #pp c'est le compteur dans la form string parceque il faut passer les index comme des string  
-for mmm in range(0,1):    
+
+tousindices = np.zeros([len(x2)-1, 6])
+
+for mmm in range(0, len(x2) - 1):    
     d=[]
     spliteddata=[]
     decrypteddata=[]
@@ -1114,7 +1221,7 @@ for mmm in range(0,1):
     
     #filtrage des angles 
     filtreflex=savgol_filter(flex,21,5)
-    filtreflexMAX=savgol_filter(PHI,101,5)
+    filtreflexMAX=savgol_filter(flex,101,5)
     #filtreflex=PHI
     filtrerot=savgol_filter(rot,21,5)
    #print(len(flex))
@@ -1135,157 +1242,171 @@ for mmm in range(0,1):
         sinon c'est la separation aleatoire  avec la fonction getAleatoireSeries()   
         
         """    
-        if exer=="extention":
-            #filtreflex=savgol_filter(flex,101,5)
-            try:
-                
-                #cette variable contient le resultat de  l'analyse 
-                maximus=extentionAnalyse()
-
-            except:
-                print("impossible de detecter les mouvemnts ")
-
-             
-            try:
-                #cette variable contient les Series 
-                Series=detectSeries()
-                #cette instruction est pour eliminer les zeros qui sont intitalisé avec le tabelau               
-                Series=Series[Series[:, 1] != 0]
-                #cette condition c'est pour  verifier si on a des mouvement mais la series n'est pas detecter
-                #pour cela je prends toute l'exercice je l'ai fait provisoirement pour le debug 
-                if len(Series)==0 and len(maximus)!=0:
-                    Series=np.zeros([1,2])
-                    Series[0][0]=maximus[0][0]
-                    Series[0][1]=maximus[len(maximus)-1][3]
-                elif len(Series)==0 and len(maximus)==0:
-                    Series=np.zeros([1,2])
-                    Series[0][0]=0
-                    Series[0][1]=len(flex)-1
-          
-          
-            except:
-                print("impossible de detecter les Series ")
-     
-                
-            if 'Series' in globals():
-                try:
-                    pppppppp=5555                                 
-                    #exportPdf(Series)
-                except:
-                    print("impossible d'exporter le pdf  les Series ")
-
-            else :               
-                 try:
-                    Series=getAleatoireSeries()           
-
-                    #exportPdf(Series)
-                 except:
-                    print("impossible d'exporter le pdf  les Series ")
-
-                
-#pour les Squat c'est pareil pour le cas de les extentions precedent 
-                
-        elif exer=="squats_2feet" or exer=="squats_1foot" :
-            
-             
-            print("hello")
-            #filtreflex=savgol_filter(flex,101,5)
-            exercise="Squat"
-            try :           
-                maximus=squatAnalyse()
-                
-               
-                print(maximus)
-    
-            except :        
-                print("impossible de detecter les mouvemnts ")
-            
-            try:
-                Series=detectSeries()
-                Series=Series[Series[:, 1] != 0]
-                if len(Series)==0 and len(maximus)!=0:
-                    Series=np.zeros([1,2])
-                    Series[0][0]=maximus[0][0]
-                    Series[0][1]=maximus[len(maximus)-1][3]
-                elif len(Series)==0 and len(maximus)==0:
-                    Series=np.zeros([1,2])
-                    Series[0][0]=0
-                    Series[0][1]=len(flex)-1
-            except :        
-                print("impossible de detecter les series ")                
-                    
-                    
-                if 'Series' in globals():  
-                    ppppppppp=2
-
-                    #exportPdf(Series,x2)
-                else :
-                    Series=getAleatoireSeries()           
-                    #exportPdf(Series)
-                    
-                Series=getAleatoireSeries()           
-                #exportPdf(Series)        
-                        
-    
         
-        elif exer=="proprioception_static":
-           try:
-                #le traitement pour la proprioceprion est different on utilise les gyroscopes 
-                maximus=Proprio_Analyse()
-           except: 
-                print("impossible de decomposer les mouvements")                  
-                #detection des serie pour la proprio           
-           try:
-                Series=detectSeriesProp()
-                print(Series)
-                #verifier si la taille de serie elle doit pas avoir un intervalle null                      
-                Series=Series[Series[:, 1] != 0]
-                #verifier si y'a des mouvement mais pas de serie alors on prend tous les movement                                  
-                if len(Series)==0 and len(maximus)!=0:
-                    Series=np.zeros([1,2])
-                    Series[0][0]=maximus[0][0]
-                    Series[0][1]=maximus[len(maximus)-1][3]
-           except:
-               print("impossible de detetceter Les series ")
-    
-            #verifier si on a des serie sinon generer une serie automatique 
-           if 'Series' in globals():
-                try:        
-                    print("dddd de genere le Pdf ")
-
-                    #exportPdf(Series,x2)
-                    print(1)
-                except:
-                    print("impossible de genere le Pdf ")
-           else :
-                try:
-                    Series=getAleatoireSeries()           
-                    #exportPdf(Series)  
-                except:
-                    print("impossible de genere le Pdf ")
-                        
-
-
-
-
-
-                        
-        
-        #Traitement a faire pour les autres exercices generation du pdf directement jusqua trouver les incdicatuers pour ces exercices 
-        elif exer!="extention" and exer!="proprioception_static" and exer!="squats_2feet" and  exer!="squats_1foot" :
-            try:               
-                Series=getAleatoireSeries()
-                try:
-                    ppppppppp=2
-
-                    #exportPdf(Series,x2)
-                except:
-                    print("impossible d'exporter notype exercice Pdf")
-                   
-    
-            except:
-                print("impossible de detecter les series ")
+#        if exer == 'jumpside_2legs' :     
+        error = False
+        maximus = squatAnalyse()
+        tab = SquatAnalyse2()
+        indicators = getIndice()
+        indicatorsex = getIndiceEX()
+        tousindices[mmm][:] = indicatorsex[:]
                 
+#            tousindices[mmm][0] = tousindices[mmm][0] / tousindices[mmm][]
+        
+        
+        
+        #####ICI Hypothèse: que des squats & proprio#####################
+#        if exer=="extention":
+#            #filtreflex=savgol_filter(flex,101,5)
+#            try:
+#                
+#                #cette variable contient le resultat de  l'analyse 
+#                maximus=extentionAnalyse()
+#
+#            except:
+#                print("impossible de detecter les mouvemnts ")
+#
+#             
+#            try:
+#                #cette variable contient les Series 
+#                Series=detectSeries()
+#                #cette instruction est pour eliminer les zeros qui sont intitalisé avec le tabelau               
+#                Series=Series[Series[:, 1] != 0]
+#                #cette condition c'est pour  verifier si on a des mouvement mais la series n'est pas detecter
+#                #pour cela je prends toute l'exercice je l'ai fait provisoirement pour le debug 
+#                if len(Series)==0 and len(maximus)!=0:
+#                    Series=np.zeros([1,2])
+#                    Series[0][0]=maximus[0][0]
+#                    Series[0][1]=maximus[len(maximus)-1][3]
+#                elif len(Series)==0 and len(maximus)==0:
+#                    Series=np.zeros([1,2])
+#                    Series[0][0]=0
+#                    Series[0][1]=len(flex)-1
+#          
+#          
+#            except:
+#                print("impossible de detecter les Series ")
+#     
+#                
+#            if 'Series' in globals():
+#                try:
+#                    pppppppp=5555                                 
+#                    #exportPdf(Series)
+#                except:
+#                    print("impossible d'exporter le pdf  les Series ")
+#
+#            else :               
+#                 try:
+#                    Series=getAleatoireSeries()           
+#
+#                    #exportPdf(Series)
+#                 except:
+#                    print("impossible d'exporter le pdf  les Series ")
+#
+#                
+##pour les Squat c'est pareil pour le cas de les extentions precedent 
+#                
+#        elif exer=="squats_2feet" or exer=="squats_1foot" :
+#            
+#             
+#            print("hello")
+#            #filtreflex=savgol_filter(flex,101,5)
+#            exercise="Squat"
+#            try :           
+#                maximus=squatAnalyse()
+#                
+#               
+#                print(maximus)
+#    
+#            except :        
+#                print("impossible de detecter les mouvemnts ")
+#            
+#            try:
+#                Series=detectSeries()
+#                Series=Series[Series[:, 1] != 0]
+#                if len(Series)==0 and len(maximus)!=0:
+#                    Series=np.zeros([1,2])
+#                    Series[0][0]=maximus[0][0]
+#                    Series[0][1]=maximus[len(maximus)-1][3]
+#                elif len(Series)==0 and len(maximus)==0:
+#                    Series=np.zeros([1,2])
+#                    Series[0][0]=0
+#                    Series[0][1]=len(flex)-1
+#            except :        
+#                print("impossible de detecter les series ")                
+#                    
+#                    
+#                if 'Series' in globals():  
+#                    ppppppppp=2
+#
+#                    #exportPdf(Series,x2)
+#                else :
+#                    Series=getAleatoireSeries()           
+#                    #exportPdf(Series)
+#                    
+#                Series=getAleatoireSeries()           
+#                #exportPdf(Series)        
+#                        
+#    
+#        
+#        elif exer=="proprioception_static":
+#           try:
+#                #le traitement pour la proprioceprion est different on utilise les gyroscopes 
+#                maximus=Proprio_Analyse()
+#           except: 
+#                print("impossible de decomposer les mouvements")                  
+#                #detection des serie pour la proprio           
+#           try:
+#                Series=detectSeriesProp()
+#                print(Series)
+#                #verifier si la taille de serie elle doit pas avoir un intervalle null                      
+#                Series=Series[Series[:, 1] != 0]
+#                #verifier si y'a des mouvement mais pas de serie alors on prend tous les movement                                  
+#                if len(Series)==0 and len(maximus)!=0:
+#                    Series=np.zeros([1,2])
+#                    Series[0][0]=maximus[0][0]
+#                    Series[0][1]=maximus[len(maximus)-1][3]
+#           except:
+#               print("impossible de detetceter Les series ")
+#    
+#            #verifier si on a des serie sinon generer une serie automatique 
+#           if 'Series' in globals():
+#                try:        
+#                    print("dddd de genere le Pdf ")
+#
+#                    #exportPdf(Series,x2)
+#                    print(1)
+#                except:
+#                    print("impossible de genere le Pdf ")
+#           else :
+#                try:
+#                    Series=getAleatoireSeries()           
+#                    #exportPdf(Series)  
+#                except:
+#                    print("impossible de genere le Pdf ")
+#                        
+#
+#
+#
+#
+#
+#                        
+#        
+#        #Traitement a faire pour les autres exercices generation du pdf directement jusqua trouver les incdicatuers pour ces exercices 
+#        elif exer!="extention" and exer!="proprioception_static" and exer!="squats_2feet" and  exer!="squats_1foot" :
+#            try:               
+#                Series=getAleatoireSeries()
+#                try:
+#                    ppppppppp=2
+#
+#                    #exportPdf(Series,x2)
+#                except:
+#                    print("impossible d'exporter notype exercice Pdf")
+#                   
+#    
+#            except:
+#                print("impossible de detecter les series ")
+#                
                 
                 
         """apres le traitement de l'exercice on  genere le Pdf 
@@ -1318,6 +1439,9 @@ for mmm in range(0,1):
         tmps2=time.clock()
         #plt.close('all')
         print("%f\n" %(tmps2-tmps1))      
+        
+
+meanss = getIndicesSeance()
         
         
 """la fonction send Mail est appelé qu'a la fin de traitement Parceque la generation
