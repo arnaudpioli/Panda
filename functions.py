@@ -278,21 +278,23 @@ def getStabMvt(p1,p2,flex):
     v1.append(flex[p1])
     vp=v1[0]
     
-
     i = 0
+
     while i < tmp:
+
         k = i % 50
         va = flex[p1+i]
-        if va - vp >2 or va - vp < 2:
+
+        if abs(va - vp) > 2 :
             compt = compt + 1
-            
-        v1[k] = va
+        
+        if i < 50 :
+            v1.append(va)
+        else :
+            v1[k] = va
         vp = mean(v1)
         i = i+1
-        
-
-    
-    plt.plot(v1)
+            
     return compt
 
 
