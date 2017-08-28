@@ -257,7 +257,7 @@ def extentionAnalyse():
     notes=getNotes()
     Notes=pd.DataFrame(notes,columns=names)
            
-           
+
            
     return
 
@@ -315,10 +315,14 @@ def squatAnalyse():
     global minnn
     global MAXIMUS
     exercise="Squat"   
+    
     #mph = min peak height // mpd = min peak distance (période)
     #Pour que ça marche bien, il faut filrer beaucoup plus.
+    
+    #les paramteres pour la detection des max et min doit etre changé  
+    #pour le min c'est -50 parceque,c'est on met valley a true il va faire flex=-flex donc le min sera -50 
     maxx=detect_peaks(filtreflexMAX,mph=30,mpd=40,edge='rising',show='true')
-    minn=detect_peaks(filtreflexMAX,mph=-30,mpd=20,edge='rising',valley='true',show='true')
+    minn=detect_peaks(filtreflexMAX,mph=-50,mpd=20,edge='rising',valley='true',show='true')
     k=0
     maxxx=[]
     minnn=[]  
@@ -348,8 +352,7 @@ def squatAnalyse():
 #//////////////////////////////    Notes des Mouvements   \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\#
 #################################################################################################
     if len(maximus) > 0:    
-        Champs = ['Valeur MAX','Ind MAX','Ind MIN1','Valeur MIN1','Ind MIN2','Valeur MIN2','Periode', 'Autre1', 'Autre2', 'Autre3', 'Autre4']
-        MAXIMUS=pd.DataFrame(maximus,columns=Champs)
+        maximus2=pd.DataFrame(maximus,columns=Champs)
         
     return maximus
 
@@ -357,9 +360,10 @@ def squatAnalyse():
 #Par Arnaud########################
 #A partir des max et mins, on trouve les débuts de montée et début de descente
 def SquatAnalyse2():
-    global tab
+    global maximus
+    #global tab
     SEUIL = 5
-    
+    tab=np.zeros([len(maxxx)-1,7])              
     if len(maximus) > 0:
         for i in range(0, len(maximus)):
             p1 = maximus[i][2]  #Indice du premier min
@@ -398,7 +402,7 @@ def SquatAnalyse2():
                         p6 = j
                         j = p7 #Indice de fin de descente
                 
-            
+            print(tab)
             tab[i] = [p1, p2, p3, p4, p5, p6, p7]
     
     return tab
@@ -1005,6 +1009,8 @@ def getData():
     
     
     
+    
+    
 def read_in():
     
     lines = sys.stdin.readlines()
@@ -1015,11 +1021,12 @@ def read_in():
     
     
     
+    
 #################################################################################################
 #////////////////////////////////////////////Executionn\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\#
 #################################################################################################
 
-###la partie qui suit jusqu'a la boucle de lecture doit etre adapté selon la lecture de données sur la base de donnée 
+###la partie qui suit jusqu'a la boucle de lecture doit etre adapté selon la façon de  lecture de données sur la base de donnée 
 #bref ca sert a la recuperation des données de la base 
 
 #ide=read_in()
@@ -1037,12 +1044,6 @@ client = pymongo.MongoClient("127.0.0.1",27017)
 db = client[MONGO_DB]
 collection1 = db.exer
 collection2 = db.exercises
-
-
-
-
-
-
 
 #recuperation des données 
 #result = collection.find({'$and':[{"exercise":exer},{'user.firstname':fname},{"_id":idd}]})
@@ -1064,7 +1065,6 @@ for i in result:
 exerids=[]
 #for i in x[0]["exer_ids"]:
 #    exerids.append(ObjectId("%s"%str(i)))
-
     
 result2 = collection2.find({"_id":idd})
 result2=collection2.find({"_id":{'$in': exerids }})
@@ -1075,8 +1075,10 @@ for i in result2:
     x2.append(i)
 x2 =rows[0]
 
-#la variable names c'est pour le stockage des ancien  indicators dans un tabelau avec des champs de colonnes 
+#la variable names et champs  c'est pour le stockage des ancien  indicators dans un tabelau avec des champs de colonnes 
 names=['id','bruitFlex','bruitRot','symflex','symrot','cor','Note MAx','fftFlex','fftRot','Noteflex','NoteRot']
+Champs = ['Valeur MAX','Ind MAX','Ind MIN1','Valeur MIN1','Ind MIN2','Valeur MIN2','Periode', 'Autre1', 'Autre2', 'Autre3', 'Autre4']
+
 #Ref c'est la reference d'angle pour les squats
 Ref=110
 
@@ -1087,7 +1089,7 @@ mode='indicators'
 #boucle pour la lecture et le traitement de chaque  exercice dans la sceance 
 #mmm c'est le compteur 
 #pp c'est le compteur dans la form string parceque il faut passer les index comme des string  
-for mmm in range(2,3):    
+for mmm in range(0,1):    
     d=[]
     spliteddata=[]
     decrypteddata=[]
@@ -1112,7 +1114,7 @@ for mmm in range(2,3):
     
     #filtrage des angles 
     filtreflex=savgol_filter(flex,21,5)
-    filtreflexMAX=savgol_filter(flex,101,3)
+    filtreflexMAX=savgol_filter(PHI,101,5)
     #filtreflex=PHI
     filtrerot=savgol_filter(rot,21,5)
    #print(len(flex))
