@@ -270,6 +270,7 @@ def searchMaxProp(x,mvt,minnn):
 
 
 #Par Arnaud################
+#Si mouvement parfait : stab = 0, si dégueu stab = len(flex)
 
 def getStabMvt(p1,p2,flex):
     compt=0
@@ -399,6 +400,8 @@ def getFluidMvt(p1,p2,p3,flex):
         
 #Par Arnaud#############
 #A utiliser pour rot aussi dans l'indicateur!
+        
+#Si mouvement parfait, fluid = 0, si dégueu, fluid = len(flex)
 def getFluidity(p1, p2, flex):
     
     tmp1=p2-p1
