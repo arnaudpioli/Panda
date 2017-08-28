@@ -10,7 +10,7 @@ Git
 import time
 tmps1=time.clock()
 import sys,json
-sys.path.append('C:\Users\Arnaud\Documents\SmartR\Algos server')
+#sys.path.append('C:\Users\Arnaud\Documents\SmartR\Algos server')
 from bson import ObjectId
 from functions import *
 import pymongo
