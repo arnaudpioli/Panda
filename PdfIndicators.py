@@ -647,7 +647,7 @@ def getIndiceSquat():
             indicators[i][1] = getCoordination(int(tab[i][0]), int(tab[i][6]), filtreflex, filtrerot)
     
             #La puissance est calculée pendant la montée et la descente
-            indicators[i][2] = getPuissance(int(tab[i][1]), int(tab[i][2]), int(tab[i][4]), int(tab[i][5]))
+            indicators[i][2] = getPuissance(int(tab[i][1]), int(tab[i][2]), int(tab[i][4]), int(tab[i][5]),PHI)
             
             #La stabilité n'est pas à prendre en compte (default = 1000)
             indicators[i][3] = 1000
