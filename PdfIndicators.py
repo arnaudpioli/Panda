@@ -8,6 +8,7 @@ Git
 #////////////////////////////////////////////Load Modules\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\#
 #################################################################################################
 import time
+import copy
 tmps1=time.clock()
 import sys,json
 #sys.path.append('C:\Users\Arnaud\Documents\SmartR\Algos server')
@@ -322,8 +323,8 @@ def squatAnalyse():
     
     #les paramteres pour la detection des max et min doit etre changé  
     #pour le min c'est -50 parceque,c'est on met valley a true il va faire flex=-flex donc le min sera -50 
-    maxx=detect_peaks(filtreflexMAX,mph=30,mpd=40,edge='rising',show='true')
-    minn=detect_peaks(filtreflexMAX,mph=-50,mpd=20,edge='rising',valley='true',show='true')
+    maxx=detect_peaks(filtreflexMAX,mph=30,mpd=40,edge='rising')
+    minn=detect_peaks(filtreflexMAX,mph=-50,mpd=20,edge='rising',valley='true')
     k=0
     maxxx=[]
     minnn=[]  
@@ -398,8 +399,8 @@ def SquatAnalyse2():
                         p3 = j
                         j = p4  #Indice de fin de montée
             
-            print(p4)
-            print(p7)
+            #print(p4)
+            #print(p7)
             if p7 > p4:
                 
                 j = p4
@@ -407,7 +408,7 @@ def SquatAnalyse2():
                     j = j + 1                    
                     if filtreflexMAX[j] < filtreflexMAX[p4] - SEUIL :
                         p5 = j
-                        print('LA')
+                        #print('LA')
                         j = p7  #Indice de début de descente
                     else : 
                         p5 = p4
@@ -745,36 +746,19 @@ def getIndiceEX():
 def getIndicesSeance() :
 
     global tousindices
-    zz = np.zeros(tousindices.shape)
-    ppp = np.zeros(tousindices.shape)
-    zz = tousindices
-    ppp = tousindices
+    zz=copy.deepcopy(tousindices)
     means = np.zeros([1, 4])
     
-    for popo in range(0, 3) :
-        
-        
-        print(popo)
-
+    for popo in range(0, 4) :
+        zz=copy.deepcopy(tousindices)
         for i in range(len(tousindices)-1) :
 
             if zz[i, popo] == -1 :
 
                 zz[i, 5] = 0
-                print(zz[i, popo])
                 
-        means[0, popo] = sum( zz[:, popo] * zz[:, 5] ) / float(sum( zz[:, 5] ))
-        zz = tousindices
-#    
-#    for i in range(len(tousindices)-1) :
-#
-#            if tousindices[i, 3] == -1 :
-#
-#                ppp[i, 5] = 0
-#                
-#    means[0, 3] = sum( ppp[:, 3] * ppp[:, 5] ) / float(sum( ppp[:, 5] ))
-      
-               
+        means[0][popo] = sum( zz[:, popo] * zz[:, 5] ) / float(sum( zz[:, 5] ))       
+           
     return means
     
     
@@ -1423,7 +1407,7 @@ for mmm in range(0, len(x2) - 2):
                         
         tmps2=time.clock()
         plt.close('all')
-        print("%f\n" %(tmps2-tmps1))   
+        #print("%f\n" %(tmps2-tmps1))   
     
     
     
@@ -1439,10 +1423,10 @@ for mmm in range(0, len(x2) - 2):
         del(Series)                
         tmps2=time.clock()
         #plt.close('all')
-        print("%f\n" %(tmps2-tmps1))      
+        #print("%f\n" %(tmps2-tmps1))      
         
 
-meanss = getIndicesSeance()
+#meanss = getIndicesSeance()
         
         
 """la fonction send Mail est appelé qu'a la fin de traitement Parceque la generation
