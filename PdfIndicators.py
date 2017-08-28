@@ -741,39 +741,21 @@ def getIndiceEX():
     return indicatorsex
 
 
-def getIndicesSeance() :
-
-    global tousindices
-    zz = np.zeros(tousindices.shape)
-    ppp = np.zeros(tousindices.shape)
-    zz = tousindices
-    ppp = tousindices
-    means = np.zeros([1, 4])
+def getIndicesSeanceARNAUD() :
     
-    for popo in range(0, 3) :
-        
-        
-        print(popo)
-
-        for i in range(len(tousindices)-1) :
-
-            if zz[i, popo] == -1 :
-
-                zz[i, 5] = 0
-                print(zz[i, popo])
-                
-        means[0, popo] = sum( zz[:, popo] * zz[:, 5] ) / float(sum( zz[:, 5] ))
-        zz = tousindices
-#    
-#    for i in range(len(tousindices)-1) :
-#
-#            if tousindices[i, 3] == -1 :
-#
-#                ppp[i, 5] = 0
-#                
-#    means[0, 3] = sum( ppp[:, 3] * ppp[:, 5] ) / float(sum( ppp[:, 5] ))
-      
-               
+    means = np.array([1, 4])    
+    
+    #Pour la fluidité
+    fluidite = np.zeros([len(tousindices), 1])
+    for i in range(len(tousindices)):
+        if tousindices[i, 0] == -1 :
+            fluidite[i, 0] = 1
+        else :
+            fluidite[i, 0] = 0
+            
+    means[0, 0] = tousindices[:, 0] * 
+   
+       
     return means
     
     
@@ -1441,7 +1423,7 @@ for mmm in range(0, len(x2) - 1):
         print("%f\n" %(tmps2-tmps1))      
         
 
-meanss = getIndicesSeance()
+meanss = getIndicesSeance(tousindices)
         
         
 """la fonction send Mail est appelé qu'a la fin de traitement Parceque la generation
