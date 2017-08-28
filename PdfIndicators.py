@@ -10,7 +10,7 @@ Git
 import time
 tmps1=time.clock()
 import sys,json
-sys.path.append('C:\Users\Arnaud\Documents\SmartR\Algos server')
+#sys.path.append('C:\Users\Arnaud\Documents\SmartR\Algos server')
 from bson import ObjectId
 from functions import *
 import pymongo
@@ -1030,12 +1030,12 @@ def read_in():
 
 
 #connexion a la base de données 
-idd=ObjectId("59a036220d30624aef90849e")
+idd=ObjectId("59a05ce962408b105106f60f")
 MONGO_HOST = "127.0.0.1"
-MONGO_DB = "Test"
+MONGO_DB = "Panda2"
 client = pymongo.MongoClient("127.0.0.1",27017)
 db = client[MONGO_DB]
-collection1 = db.Ex
+collection1 = db.exer
 collection2 = db.exercises
 
 
@@ -1123,7 +1123,7 @@ for mmm in range(2,3):
     
     if mode=='indicators':
         """
-        Pour Ce mode l'excution est differente selon le type d'exercice
+        Pour Ce mode d'excution est differente selon le type d'exercice
         
         #maximus c'est un tableua varibale qui relie les maximum au minimums 
         et les anciens indicateurs pour l'extention et flexion
