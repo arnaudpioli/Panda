@@ -555,8 +555,8 @@ def exportPdf(Series,x2):
         fig.suptitle('Angle de flexion', fontsize=20)
         plt.xlabel('Temps (s) ', fontsize=18)
         plt.ylabel('Amplitude (degres)', fontsize=16)
-        plt.plot(Datatime[int(Series[i][0]):int(Series[i][1])]/1000,PHI[int(Series[i][0]):int(Series[i][1])])
-        plt.plot(Datatime[int(Series[i][0]):int(Series[i][1])]/1000,Trembl[int(Series[i][0]):int(Series[i][1])])
+        plt.plot(Datatime[int(Series[i][0]):int(Series[i][1])]/1000,filtreflex[int(Series[i][0]):int(Series[i][1])])
+        #plt.plot(Datatime[int(Series[i][0]):int(Series[i][1])]/1000,Trembl[int(Series[i][0]):int(Series[i][1])])
         plt.xticks(size = 20)
         plt.yticks(size = 20)
         fig.savefig(imgdata, format='png')
@@ -658,12 +658,14 @@ def getNotes():
     
 
 
-#Indicators a 4 colonnes : fluid, coor, puiss, stab // Autant de lignes que de mouvements
+#Indicators a 4 colonnes : fluid, coor, puiss, stab, Ampl en Ext, ampl en flex, ampl en rot.
+#Autant de lignes que de mouvements
+
 def getIndice():
 
     RANGE_PROPRIO = len(filtreflex)/6  #taille de ce qu'on enlève arbitrairement    
     
-    indicators = np.zeros([len(tab), 4])
+    indicators = np.zeros([len(tab), 7])
 
 
     if proprio() == True :
@@ -671,17 +673,22 @@ def getIndice():
             indicators = np.zeros([1, 4])
 
             #La fluidité n'est pas à prendre en compte (default = -1)
-            indicators[0][0] = -1
+            indicators[0][0] = -1000
             
             #La coordination n'est pas à prendre en compte (default = -1)
-            indicators[0][1] = -1
+            indicators[0][1] = -1000
 
             #La puissance n'est pas à prendre en compte (default = -1)
-            indicators[0][2] = -1
+            indicators[0][2] = -1000
             
             #La stabilité se calcule sur la proprioception uniquement
             #Quand l'algo Alfred sera prêt on le fera à partir de la valeur de tremblements     
             indicators[0][3] = getStabMvt(RANGE_PROPRIO, len(filtreflex) - RANGE_PROPRIO, filtreflex)/ (float( len(filtreflex)) * 2 / 3)
+            
+            #Les amplitudes ne sont pas à prendre en compte sur la proprio
+            indicators[0][4] = -1000
+            indicators[0][5] = -1000
+            indicators[0][6] = -1000
 
 
     for i in range(len(tab)):
@@ -689,48 +696,98 @@ def getIndice():
         if proprio() == False and len(maximus) > 0 :        
             
             #La fluidité est prise entre le début et la fin de montée
-            indicators[i][0] = 1000 * ( getFluidity(int(tab[i][1]), int(tab[i][2]), filtreflex) / (tab[i][2] -tab[i][1])) + ( getFluidity(int(tab[i][4]), int(tab[i][5]), filtreflex)) / (tab[i][5] - tab[i][4])
+            indicators[i][0] = ( getFluidity(int(tab[i][1]), int(tab[i][2]), filtreflex) / (tab[i][2] -tab[i][1])) + ( getFluidity(int(tab[i][4]), int(tab[i][5]), filtreflex)) / (tab[i][5] - tab[i][4])
             
             #La coordination est prise tout le long du mouvement
-            indicators[i][1] = 1000 * getCoordination(int(tab[i][0]), int(tab[i][6]), filtreflex, filtrerot) / ( tab[i][6] - tab[i][0])
+            indicators[i][1] = getCoordination(int(tab[i][0]), int(tab[i][6]), filtreflex, filtrerot) / ( tab[i][6] - tab[i][0])
     
             #La puissance est calculée pendant la montée et la descente
-            indicators[i][2] = getPuissance(int(tab[i][1]), int(tab[i][2]), int(tab[i][4]), int(tab[i][5]),PHI)
+            #indicators[i][2] = getPuissance(int(tab[i][1]), int(tab[i][2]), int(tab[i][4]), int(tab[i][5]),PHI)
             indicators[i][2] = getPuissance(int(tab[i][1]), int(tab[i][2]), int(tab[i][4]), int(tab[i][5]), filtreflex)
             
             #La stabilité n'est pas à prendre en compte (default = -1)
-            indicators[i][3] = -1
+            indicators[i][3] = -1000
+            
+            #Les amplitudes sont déjà calculées avec maximus
+            indicators[i][4] = getAmpExt(int(tab[i][0]), int(tab[i][6]), filtreflex)
+            indicators[i][5] = getAmpFlex(int(tab[i][3]), filtreflex)
+            indicators[i][6] = getAmpRot(int(tab[i][0]), int(tab[i][3]), int(tab[i][6]), filtrerot)
             
     if (proprio() == False and len(maximus) == 0) or error == True :
         indicators = np.zeros([1, 4])
-        indicators[0][0] = -1
-        indicators[0][1] = -1
-        indicators[0][2] = -1
-        indicators[0][3] = -1
-            
-            
+        indicators[0][0] = -1000
+        indicators[0][1] = -1000
+        indicators[0][2] = -1000
+        indicators[0][3] = -1000
+        indicators[0][4] = -1000
+        indicators[0][5] = -1000
+        indicators[0][6] = -1000
 
-        
     return indicators
 
 #Pour le moment la notation se fait en moyenne sans pondération (dans l'exo)
 #Amélioration: pondérer les poids des différentes notes par mvnt par le nm de points 
 #que l'on a regardé pendant le mvnt.
 
+#transforme la string exer en indice
+def exerToEX():
+
+    global exer    
+    
+    EX = 0    
+    
+    if exer == 'squats_2feet' :
+        EX = 1
+
+    if exer == 'squats_1foot' :
+        EX = 2
+    
+    if exer == 'jumponspot_2feet' :
+        EX = 3
+
+    if exer == 'jumpforthback_2legs' :
+        EX = 4
+    
+    if exer == 'jumpside_2legs' :
+        EX = 5
+
+    if exer == 'proprioception_static' :
+        EX = 6
+    
+    if exer == 'proprioception_pillow' :
+        EX = 7
+
+    if exer == 'proprioception_forthback' :
+        EX = 8
+        
+    if exer == 'proprioception_leftright' :
+        EX = 9
+
+    if exer == 'proprioception_compass' :
+        EX = 10
+        
+    return EX
+
+
 
 def getIndiceEX():
     
     #tableau qui recap les notes pour l'exercice (Fluidité, Coor, Puiss, Stab, 
-    #0 pour Squats et 1 pr proprio)
-    indicatorsex = np.zeros([1, 6])
-
+    #Ampl en Ext, ampl en flex, ampl en rot,
+    #0 pour Squats et 1 pr proprio,
+    #longueur de la série,
+    #indice type d'exercice)
+    indicatorsex = np.zeros([1, 10])
+    
+    global exer    
+    
     indicators = getIndice()
     
     if proprio() :
         
-        indicatorsex[0, 4] = 1        
+        indicatorsex[0, 7] = 1        
     else :
-        indicatorsex[0, 4] = 0
+        indicatorsex[0, 7] = 0
     
     if len(indicators) > 0 :  
         
@@ -738,7 +795,10 @@ def getIndiceEX():
             
             indicatorsex[0, i] = mean(indicators[:, i])
     
-    indicatorsex[0, 5] = len(flex)
+    indicatorsex[0, 8] = len(flex)
+    
+    indicatorsex[0, 9] = exerToEX()
+
 
     return indicatorsex
 
@@ -756,7 +816,7 @@ def getIndicesSeance() :
         zz=copy.deepcopy(tousindices)
         for i in range(len(tousindices)-1) :
 
-            if zz[i, popo] == -1 :
+            if zz[i, popo] == -1000 :
 
                 zz[i, 5] = 0
                 
@@ -764,6 +824,73 @@ def getIndicesSeance() :
 
     return means
     
+    
+def Bilan() :
+    
+    global tousindices
+    
+    bilan = False
+    
+    debutB = 0
+    debutP = 0
+    finB = len(tousindices)   
+    
+    i = 0
+    while i < (len(tousindices)-1) :
+        #Cherche la première occurence de squats sur deux pieds.
+        if tousindices[i, 6] == 1 :
+            debutB = i
+            
+            while i < (len(tousindices)-1) :
+                i = i + 1
+                
+                #Check si il y a de la proprio derriere
+                if tousindices[i, 4] == 1 :
+                    debutP = i
+                    
+                    while i < (len(tousindices)-1) :                   
+                        i = i + 1
+                        
+                        #check si c'est à nouveau suivi par des squats
+                        if tousindices[i, 6] == 1 :
+                            finB = i
+                            bilan = True
+
+        i = i + 1
+    
+    return [bilan, debutB, debutP, finB]
+    
+    
+    
+
+
+def getIndicesBilan() :
+    
+    global tousindices
+    
+    zz=copy.deepcopy(tousindices)
+    
+    puiss = 0
+    temp = 0
+    
+    #On récupère les indices de début/fin du bilan
+    debutB = Bilan()[1]
+    debutP = Bilan()[2]
+    finB = Bilan()[3]
+    
+    #On utilise les indices entre debutB et debutP pour la puissance (3e indice de tousindices)
+    if debutB + 1  < debutP :
+        for i in range(debutB, debutP) :
+
+            if zz[i, 2] > 0 :
+                puiss = puiss + zz[i, 2]
+                temp = temp + 1
+                
+    puiss = puiss / temp
+
+    #Pour l'amplitude...
+    
+    return puiss
     
 #    
 #def getIndiceProp():
@@ -1182,7 +1309,7 @@ mode='indicators'
 #mmm c'est le compteur 
 #pp c'est le compteur dans la form string parceque il faut passer les index comme des string  
 
-tousindices = np.zeros([len(x2)-1, 6])
+tousindices = np.zeros([len(x2)-1, 7])
 
 for mmm in range(0, len(x2) - 2):    
     d=[]
@@ -1201,7 +1328,7 @@ for mmm in range(0, len(x2) - 2):
     #Les données sont stocker dans une variable global Hexdata qu'on va passer au script d'alfred pour le calcul d'angle et tremblement
     
     #Alfred c'est le script d'alfred je l'ai mis comme une fonction 
-    [PHI,Trembl]=Alfred(hexdata)
+    #[PHI,Trembl]=Alfred(hexdata)
     
     #get Time c'est pour calculer le temps
     Datatime=getTime();        
@@ -1239,6 +1366,8 @@ for mmm in range(0, len(x2) - 2):
         indicatorsex = getIndiceEX()
         tousindices[mmm][:] = indicatorsex[:]
                 
+        
+
 #            tousindices[mmm][0] = tousindices[mmm][0] / tousindices[mmm][]
         
         
@@ -1428,13 +1557,21 @@ for mmm in range(0, len(x2) - 2):
         #plt.close('all')
         #print("%f\n" %(tmps2-tmps1))      
         
+print("%f\n" %(tmps2-tmps1)) 
 
 meanss = getIndicesSeance()
 
+print(Bilan())
+
+if Bilan()[0] :
+    meanss[0, 2] = getIndicesBilan()
+
+    
+    
 
 #Ajouter sur la db
 try :
-    db.exer.update({'_id' : idd}, {'$set' : {'indices' : {'stabilité' : str(meanss[0][0]), 'fluid' : str(meanss[0][1]), 'puiss' : str(meanss[0][2]), 'stab' : str(meanss[0][3]) } } })
+    db.exer.update({'_id' : idd}, {'$set' : {'indices' : {'Fluidité' : str(meanss[0][0]), 'Coordination' : str(meanss[0][1]), 'Puissance' : str(meanss[0][2]), 'Stabilité' : str(meanss[0][3]) } } })
 except :
     print('fail to update indicators')
         
