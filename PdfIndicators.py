@@ -515,12 +515,24 @@ def getMaximus(maximus):
 #//////////////////////////////  PDf Generation    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\#
 ##########################################################################################
 
-def exportPdf(Series,x2):
+
+
+def exportMeanssinPDf(means):
+     c.drawString(20,630," Indicateurs de Seance")
+     c.drawString(20,600," Flu :%.2f "%float(means[0][0]))
+     c.drawString(100,600," Cor :%.2f "%float(meanss[0][1]))
+     c.drawString(180,600," Puis :%.2f "%float(means[0][2]) )
+     c.drawString(260,600," Stab :%.2f "%float(meanss[0][3])) 
+     c.save()
+
+
+def exportPdf(Series,x2,indicators):
     x=x2
+    
     global PNum
     #plt.ioff()
     global c
-    if pp==0:        
+    if mmm==0:        
         fichier="C:/datatest/rapports/Rapport_"+"_%s.pdf"%idd
         c = canvas.Canvas(fichier)
         c.addPageLabel(1)
@@ -571,8 +583,23 @@ def exportPdf(Series,x2):
         if "comment" in x[pp]:
             c.drawString(20,730," Commentaire:%s"%x[pp]["comment"])
         else :
-            c.drawString(20,730," Commentaire:Pas de commentaires ")        
-      
+            c.drawString(20,730," Commentaire:Pas de commentaires ")   
+            
+        c.drawString(20,690," Indices Exercice :")
+        if proprio()==True:            
+            c.drawString(20,670," Stabilité :%s"%indicatorsex[0][3])
+        else:
+            c.drawString(20,670," Flu :%.2f "%indicatorsex[0][0])
+            c.drawString(100,670," cor :%.2f "%indicatorsex[0][1])
+            c.drawString(180,670," puis :%.2f "%indicatorsex[0][2])
+
+
+            
+            
+            
+            
+            
+            
         fig2 = plt.figure(figsize=(32, 16))
         imgdata2= cStringIO.StringIO()
         plt.plot(Datatime[int(Series[i][0]):int(Series[i][1])]/1000,filtrerot[int(Series[i][0]):int(Series[i][1])],color='green')
@@ -662,7 +689,7 @@ def getNotes():
 #Autant de lignes que de mouvements
 
 def getIndice():
-
+    indiceforPDf=[]
     RANGE_PROPRIO = len(filtreflex)/6  #taille de ce qu'on enlève arbitrairement    
     
     indicators = np.zeros([len(tab), 7])
@@ -684,11 +711,12 @@ def getIndice():
             #La stabilité se calcule sur la proprioception uniquement
             #Quand l'algo Alfred sera prêt on le fera à partir de la valeur de tremblements     
             indicators[0][3] = getStabMvt(RANGE_PROPRIO, len(filtreflex) - RANGE_PROPRIO, filtreflex)/ (float( len(filtreflex)) * 2 / 3)
-            
+
             #Les amplitudes ne sont pas à prendre en compte sur la proprio
             indicators[0][4] = -1000
             indicators[0][5] = -1000
             indicators[0][6] = -1000
+            indiceforPDf=indicators[0][3]
 
 
     for i in range(len(tab)):
@@ -712,7 +740,8 @@ def getIndice():
             indicators[i][4] = getAmpExt(int(tab[i][0]), int(tab[i][6]), filtreflex)
             indicators[i][5] = getAmpFlex(int(tab[i][3]), filtreflex)
             indicators[i][6] = getAmpRot(int(tab[i][0]), int(tab[i][3]), int(tab[i][6]), filtrerot)
-            
+            indiceforPDf=[indicators[0][0],indicators[0][1],indicators[0][2],indicators[0][4],indicators[0][5],indicators[0][6]]
+
     if (proprio() == False and len(maximus) == 0) or error == True :
         indicators = np.zeros([1, 7])
         indicators[0][0] = -1000
@@ -722,6 +751,7 @@ def getIndice():
         indicators[0][4] = -1000
         indicators[0][5] = -1000
         indicators[0][6] = -1000
+        indiceforPDf=-1000
 
     return indicators
 
@@ -1254,7 +1284,6 @@ def read_in():
 #print(ide)
 
 
-
 #connexion a la base de données 
 idd=ObjectId("59a05ce962408b105106f60f")
 MONGO_HOST = "127.0.0.1"
@@ -1297,6 +1326,7 @@ x2 =rows[0]
 #la variable names et champs  c'est pour le stockage des ancien  indicators dans un tabelau avec des champs de colonnes 
 names=['id','bruitFlex','bruitRot','symflex','symrot','cor','Note MAx','fftFlex','fftRot','Noteflex','NoteRot']
 Champs = ['Valeur MAX','Ind MAX','Ind MIN1','Valeur MIN1','Ind MIN2','Valeur MIN2','Periode', 'Autre1', 'Autre2', 'Autre3', 'Autre4']
+indiceforPDf=[]
 
 #Ref c'est la reference d'angle pour les squats
 Ref=110
@@ -1308,10 +1338,10 @@ mode='indicators'
 #boucle pour la lecture et le traitement de chaque  exercice dans la sceance 
 #mmm c'est le compteur 
 #pp c'est le compteur dans la form string parceque il faut passer les index comme des string  
-
+PNum=0
 tousindices = np.zeros([len(x2)-1, 10])
 
-for mmm in range(0, len(x2) - 2):    
+for mmm in range(0, len(x2) - 3):    
     d=[]
     spliteddata=[]
     decrypteddata=[]
@@ -1533,14 +1563,15 @@ for mmm in range(0, len(x2) - 2):
         plt.close('all') c'est pour fermer les fentres qui sont dans 
         """          
         #exportPdf(Series,x2)           
-        #Series=getAleatoireSeries()           
-        #exportPdf(Series,x2,indicators)
+        Series=getAleatoireSeries()           
+        exportPdf(Series,x2,indicators)
         #del(Series)
                         
         tmps2=time.clock()
         plt.close('all')
         #print("%f\n" %(tmps2-tmps1))   
-    
+
+
     
     
     
@@ -1551,7 +1582,7 @@ for mmm in range(0, len(x2) - 2):
         """  
         
         Series=getAleatoireSeries()           
-        #exportPdf(Series,x2)
+        exportPdf(Series,x2)
         del(Series)                
         tmps2=time.clock()
         #plt.close('all')
@@ -1568,12 +1599,16 @@ if Bilan()[0] :
 
     
     
+exportMeanssinPDf(meanss)
 
 #Ajouter sur la db
 try :
     db.exer.update({'_id' : idd}, {'$set' : {'indices' : {'Fluidité' : str(meanss[0][0]), 'Coordination' : str(meanss[0][1]), 'Puissance' : str(meanss[0][2]), 'Stabilité' : str(meanss[0][3]) } } })
 except :
     print('fail to update indicators')
+
+
+    
         
 """la fonction send Mail est appelé qu'a la fin de traitement Parceque la generation
 du PDf est faite au cours du traitement de la sceance donc on attend la fin de generation 
