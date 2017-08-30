@@ -670,7 +670,7 @@ def getIndice():
 
     if proprio() == True :
         
-            indicators = np.zeros([1, 4])
+            indicators = np.zeros([1, 7])
 
             #La fluidité n'est pas à prendre en compte (default = -1)
             indicators[0][0] = -1000
@@ -714,7 +714,7 @@ def getIndice():
             indicators[i][6] = getAmpRot(int(tab[i][0]), int(tab[i][3]), int(tab[i][6]), filtrerot)
             
     if (proprio() == False and len(maximus) == 0) or error == True :
-        indicators = np.zeros([1, 4])
+        indicators = np.zeros([1, 7])
         indicators[0][0] = -1000
         indicators[0][1] = -1000
         indicators[0][2] = -1000
@@ -1256,7 +1256,7 @@ def read_in():
 
 
 #connexion a la base de données 
-idd=ObjectId("59a4118dbd36e581db0be41d")
+idd=ObjectId("59a05ce962408b105106f60f")
 MONGO_HOST = "127.0.0.1"
 MONGO_DB = "Panda2"
 client = pymongo.MongoClient("127.0.0.1",27017)
@@ -1309,7 +1309,7 @@ mode='indicators'
 #mmm c'est le compteur 
 #pp c'est le compteur dans la form string parceque il faut passer les index comme des string  
 
-tousindices = np.zeros([len(x2)-1, 7])
+tousindices = np.zeros([len(x2)-1, 10])
 
 for mmm in range(0, len(x2) - 2):    
     d=[]

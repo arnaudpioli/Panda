@@ -500,15 +500,15 @@ def getEnduranceProprio(indicators): #4 colonnes: fluid, coor, puiss, stab
     return ind    
 
 def getAmpExt(p1, p2, flex) :
-    AmpExt = ( flex(p1) + flex(p2) ) / 2
+    AmpExt = ( flex[p1] + flex[p2] ) / 2
     return AmpExt
     
 def getAmpFlex(p1, flex) :
-    return flex(p1)
+    return flex[p1]
     
 def getAmpRot(p1, p2, p3, rot) :
-    rotmin = ( rot(p1) + rot(p3) ) / 2
-    rotmax = rot(p2)
+    rotmin = ( rot[p1] + rot[p3] ) / 2
+    rotmax = rot[p2]
     return abs(rotmax - rotmin)
 
 
